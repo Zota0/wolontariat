@@ -1,0 +1,14 @@
+
+**/tmp
+/out
+/dist
+
+**/.env.*
+
+/frontend/dist
+/frontend/node_modules
+/frontend/.next
+**/.cache
+
+**/*.log
+*.log
