@@ -2,7 +2,7 @@ FROM golang-1.23.3 as go
 
 WORKDIR /working
 
-COPY . /working
+COPY . !(.env) /working/
 
 RUN go mod download
 
