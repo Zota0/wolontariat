@@ -64,13 +64,26 @@ func getUser(db *sql.DB, id uint64) (*structs.Users, error) {
 	return &user, nil
 }
 
-func Out(w http.ResponseWriter, data any, status uint8) error {
+func Out(w http.ResponseWriter, msg string, data any, status uint8) error {
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(map[string]interface{}{
-		"msg":    "",
+		"msg":    msg,
 		"data":   data,
 		"status": status,
 	})
+}
+
+func httpErrorJSON(w http.ResponseWriter, msg string, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	err := json.NewEncoder(w).Encode(map[string]interface{}{
+		"msg":    msg,
+		"data":   nil,
+		"status": status,
+	})
+	if err != nil {
+		log.Printf("Error encoding JSON response: %v", err)
+	}
 }
 
 func main() {
@@ -96,8 +109,8 @@ func main() {
 	}
 
 	http.HandleFunc("/get-users", func(w http.ResponseWriter, r *http.Request) {
-		if err := Out(w, users, 200); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err := Out(w, "", users, 200); err != nil {
+			httpErrorJSON(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 		log.Printf("GET /get-users request received")
@@ -107,19 +120,32 @@ func main() {
 		id, err := strconv.ParseUint(r.URL.Query().Get("id"), 10, 64)
 
 		if err != nil {
-			http.Error(w, "invalid id parameter", http.StatusBadRequest)
+			httpErrorJSON(w, "Invalid id parameter", http.StatusBadRequest)
 			return
 		}
 		user, err := getUser(db, id)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			httpErrorJSON(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
 
-		if err := Out(w, user, 200); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err := Out(w, "", user, 200); err != nil {
+			httpErrorJSON(w, "Internal Server Error", http.StatusInternalServerError)
 			return
 		}
+	})
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.Redirect(w, r, "/404", http.StatusFound)
+		}
+		if err := Out(w, "Working!", "", 200); err != nil {
+			httpErrorJSON(w, "Internal Server Error", http.StatusInternalServerError)
+		}
+	})
+
+	http.HandleFunc("/404", func(w http.ResponseWriter, r *http.Request) {
+		httpErrorJSON(w, "Not Found", http.StatusNotFound)
 	})
 
 	fmt.Println("Server listening on :6866")
