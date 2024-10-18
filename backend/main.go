@@ -32,7 +32,7 @@ func connectDB(dsn string) (*sql.DB, error) {
 
 // getUsers retrieves users from the database.  It returns a slice of Users and an error if something goes wrong.
 func getUsers(db *sql.DB) ([]structs.Users, error) {
-	rows, err := db.Query("SELECT id, first_name, last_name, email, phone FROM users")
+	rows, err := db.Query("SELECT id, first_name, last_name, email, phone FROM Users")
 	if err != nil {
 		return nil, fmt.Errorf("failed to query users: %w", err)
 	}
@@ -57,7 +57,7 @@ func getUsers(db *sql.DB) ([]structs.Users, error) {
 
 func getUser(db *sql.DB, id uint64) (*structs.Users, error) {
 	var user structs.Users
-	err := db.QueryRow("SELECT * FROM users WHERE id = ?", id).Scan(&user.Id, &user.First_name, &user.Last_name, &user.Email, &user.Phone)
+	err := db.QueryRow("SELECT * FROM Users WHERE id = ?", id).Scan(&user.Id, &user.First_name, &user.Last_name, &user.Email, &user.Phone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query user: %w", err)
 	}
